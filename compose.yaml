@@ -1,0 +1,7 @@
+﻿services:
+  crazy-eights:
+    image: crazy-eights
+    build:
+      context: .
+      dockerfile: Dockerfile
+
