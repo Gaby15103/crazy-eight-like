@@ -1,16 +1,31 @@
 using crazy_eights.Models;
 
 namespace crazy_eights.GameEngine;
-
+/// <summary>
+/// Gère la logique des tours de jeu, la validation des coups et l'application des effets des cartes à effet.
+/// </summary>
 public class TurnManager
 {
+    /// <summary>
+    /// Vérifie si une carte peut être jouée par rapport à la carte au sommet de la pile de dépôt.
+    /// </summary>
+    /// <param name="cardToPlay">La carte que le joueur souhaite jouer.</param>
+    /// <param name="topDepositCard">La carte actuelle au sommet de la pile de dépôt.</param>
+    /// <returns>Si le coup est valide.</returns>
     public bool IsValidePlay(Card cardToPlay, Card topDepositCard)
     {
         return cardToPlay.Color.Name == topDepositCard.Color.Name ||
                cardToPlay.Value == topDepositCard.Value ||
                cardToPlay.Value == CardValue.Jack;
     }
-
+    /// <summary>
+    /// Applique l'effet associé à une carte jouée.
+    /// </summary>
+    /// <param name="playedCard">La carte qui vient d'être jouée.</param>
+    /// <param name="board">Le plateau de jeu contenant les joueurs et les piles.</param>
+    /// <param name="currentPlayerIndex">L'index du joueur actuel.</param>
+    /// <param name="notifyMessage">Action de notification pour informer les joueurs d'un événement ou d'un effet.</param>
+    /// <param name="newCardColor">La nouvelle couleur choisie, si changé.</param>
     public void ApplyCardEffect(Card playedCard, GameBoard board, ref int currentPlayerIndex,
         Action<string, MessageType> notifyMessage, CardColor newCardColor)
     {

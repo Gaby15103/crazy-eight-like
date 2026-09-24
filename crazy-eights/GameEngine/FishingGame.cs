@@ -83,7 +83,14 @@ public class FishingGame
         CurrentPlayer = Board.Players[rnd.Next(0, Board.Players.Count)];
         IsRunning = true;
     }
-    
+
+    /// <summary>
+    /// Initialise une nouvelle instance du jeu pour les tests.
+    /// Génère le paquet, mélange les cartes, distribue les mains initiales et prépare le plateau.
+    /// </summary>
+    /// <param name="players">La liste des joueurs participant à la partie.</param>
+    /// <param name="config">La configuration du jeu, incluant la taille de la main initiale.</param>
+    /// <param name="shuffleDeck">Si le packet de carte doit être mélangé</param>
     public FishingGame(List<Player> players, GameConfig config, bool shuffleDeck = true)
     {
         CardPair cardPair = new CardPair();

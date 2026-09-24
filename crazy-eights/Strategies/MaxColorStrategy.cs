@@ -9,19 +9,12 @@ public class MaxColorStrategy : IPlayerStrategy
 {
     /// <inheritdoc/>
     public string Name { get; } = "Priorité des couleurs majoritaires";
-
-    private readonly ActionCardPriorityStrategy _emergencyStrategy = new();
+    
 
     /// <inheritdoc/>
     public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
         bool isOpponentInDanger = false)
     {
-        if (isOpponentInDanger)
-        {
-            var actionCard = _emergencyStrategy.ChooseCard(hand, topCard, isValidPlay);
-            if (actionCard.HasValue) return actionCard;
-        }
-
         var handList = hand.ToList();
         var validCards = handList.Where(c => isValidPlay(c, topCard)).ToList();
         if (!validCards.Any()) return null;

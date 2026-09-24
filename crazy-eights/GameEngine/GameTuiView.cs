@@ -6,6 +6,10 @@ using Terminal.Gui.Views;
 
 namespace crazy_eights.GameEngine;
 
+/// <summary>
+/// L'interface utilisateur textuelle du jeu Paire de Cartes basée sur la bibliothèque Terminal.Gui.
+/// Gère l'affichage du plateau de jeu, des mains des joueurs, des piles et de l'historique des actions.
+/// </summary>
 public class GameTuiView
 {
     /// <summary>
@@ -57,6 +61,10 @@ public class GameTuiView
     /// </summary>
     private readonly ObservableCollection<GameEventArgs> _logMessages = new();
 
+    /// <summary>
+    /// Initialise l'application Terminal.Gui, configure la fenêtre principale, 
+    /// les panneaux de la table de jeu, la liste des joueurs et l'historique des coups.
+    /// </summary>
     public void Initialize()
     {
         _app = Application.Create();

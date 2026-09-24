@@ -9,7 +9,7 @@ public class DangerAwareStrategyDecorator : IPlayerStrategy
 {
     private readonly IPlayerStrategy _innerStrategy;
     private readonly Func<bool> _isAnyOpponentInDanger;
-    private readonly ActionCardPriorityStrategy _actionStrategy = new();
+    private readonly IPlayerStrategy _dangerStrategy;
 
     /// <inheritdoc/>
     public string Name => _innerStrategy.Name;
@@ -19,25 +19,31 @@ public class DangerAwareStrategyDecorator : IPlayerStrategy
     /// </summary>
     /// <param name="innerStrategy">La stratégie de base à envelopper.</param>
     /// <param name="isAnyOpponentInDanger">Fonction retournant vrai si un adversaire est en situation critique.</param>
-    public DangerAwareStrategyDecorator(IPlayerStrategy innerStrategy, Func<bool> isAnyOpponentInDanger)
+    public DangerAwareStrategyDecorator(
+        IPlayerStrategy innerStrategy, 
+        Func<bool> isAnyOpponentInDanger, 
+        IPlayerStrategy? dangerStrategy = null)
     {
         _innerStrategy = innerStrategy;
         _isAnyOpponentInDanger = isAnyOpponentInDanger;
+        // Si aucune stratégie de danger n'est fournie, on utilise par défaut la priorité des cartes action
+        _dangerStrategy = dangerStrategy ?? new ActionCardPriorityStrategy();
     }
 
     /// <inheritdoc/>
     public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
         bool isOpponentInDanger = false)
     {
-        if (!_isAnyOpponentInDanger() && !isOpponentInDanger)
-            return _innerStrategy.ChooseCard(hand, topCard, isValidPlay);
-        var actionCard = _actionStrategy.ChooseCard(hand, topCard, isValidPlay);
-        if (actionCard.HasValue)
+        if (_isAnyOpponentInDanger() || isOpponentInDanger)
         {
-            return actionCard;
+            var dangerCard = _dangerStrategy.ChooseCard(hand, topCard, isValidPlay, isOpponentInDanger);
+            if (dangerCard.HasValue)
+            {
+                return dangerCard;
+            }
         }
 
-        return _innerStrategy.ChooseCard(hand, topCard, isValidPlay);
+        return _innerStrategy.ChooseCard(hand, topCard, isValidPlay, isOpponentInDanger);
     }
 
     /// <inheritdoc/>
@@ -46,9 +52,9 @@ public class DangerAwareStrategyDecorator : IPlayerStrategy
     {
         if (_isAnyOpponentInDanger() || isOpponentInDanger)
         {
-            return _actionStrategy.ChooseColor(hand, topCard, isValidPlay);
+            return _dangerStrategy.ChooseColor(hand, topCard, isValidPlay, isOpponentInDanger);
         }
 
-        return _innerStrategy.ChooseColor(hand, topCard, isValidPlay);
+        return _innerStrategy.ChooseColor(hand, topCard, isValidPlay, isOpponentInDanger);
     }
 }

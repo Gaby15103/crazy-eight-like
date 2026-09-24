@@ -14,7 +14,7 @@ public class DrawStack
     /// Le nombre de carte dans la pile de pioche
     /// </summary>
     public int Count => _cards.Count;
-
+    
     public DrawStack(List<Card> cards)
     {
         _cards = cards;

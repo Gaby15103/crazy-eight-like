@@ -14,19 +14,11 @@ public class RandomStrategy : IPlayerStrategy
     /// Instance de générateur pseudo-aléatoire.
     /// </summary>
     private readonly Random _random = new();
-    
-    private readonly ActionCardPriorityStrategy _emergencyStrategy = new();
 
     /// <inheritdoc/>
     public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
         bool isOpponentInDanger = false)
     {
-        if (isOpponentInDanger)
-        {
-            var actionCard = _emergencyStrategy.ChooseCard(hand, topCard, isValidPlay);
-            if (actionCard.HasValue) return actionCard;
-        }
-        
         var validCards = hand.Where(c => isValidPlay(c, topCard)).ToList();
         if (!validCards.Any()) return null;
         

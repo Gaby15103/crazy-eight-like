@@ -1,6 +1,6 @@
 namespace crazy_eights.Models;
 /// <summary>
-/// Enum représentant la valeur d'une carte
+/// Représente la valeur nominale d'une carte à jouer.
 /// </summary>
 public enum CardValue
 {
