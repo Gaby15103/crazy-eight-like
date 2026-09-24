@@ -65,7 +65,7 @@ public class TurnManager
                     Card counterCard = defendingPlayer.Hand.First(c => c.Value == CardValue.Two);
 
                     defendingPlayer.RemoveCard(counterCard);
-                    board.DepositeStack.Push(counterCard);
+                    board.DepositStack.Push(counterCard);
 
                     notifyMessage(
                         $"{defendingPlayer.FirstName} contre avec un Deux de {counterCard.Color} ! La peine monte à {nbCardToDraw + 2} cartes.",
@@ -96,7 +96,7 @@ public class TurnManager
                     $"{currentPlayer.FirstName} a changé la couleur pour {newCardColor}",
                     MessageType.Effect
                 );
-                board.DepositeStack.SetTopCardColor(newCardColor);
+                board.DepositStack.SetTopCardColor(newCardColor);
                 currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 break;
             default:

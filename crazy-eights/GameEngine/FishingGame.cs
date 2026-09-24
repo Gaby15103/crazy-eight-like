@@ -75,9 +75,9 @@ public class FishingGame
             initialDeposite.Add(drawStack.DrawCard());
         }
 
-        DepositeStack depositeStack = new DepositeStack(initialDeposite);
+        DepositStack depositStack = new DepositStack(initialDeposite);
 
-        Board = new GameBoard(players, drawStack, depositeStack);
+        Board = new GameBoard(players, drawStack, depositStack);
         _turnManager = new TurnManager();
         Random rnd = new Random();
         CurrentPlayer = Board.Players[rnd.Next(0, Board.Players.Count)];
@@ -122,9 +122,9 @@ public class FishingGame
             initialDeposite.Add(drawStack.DrawCard());
         }
 
-        DepositeStack depositeStack = new DepositeStack(initialDeposite);
+        DepositStack depositStack = new DepositStack(initialDeposite);
 
-        Board = new GameBoard(players, drawStack, depositeStack);
+        Board = new GameBoard(players, drawStack, depositStack);
         _turnManager = new TurnManager();
     
         // Possibilité de fixer le joueur de départ pour les tests
@@ -161,7 +161,7 @@ public class FishingGame
             {
                 cardToPlay = CurrentPlayer.Strategy.ChooseCard(
                     CurrentPlayer.Hand,
-                    Board.DepositeStack.TopCard,
+                    Board.DepositStack.TopCard,
                     (card, top) => _turnManager.IsValidePlay(card, top),
                     isOpponentInDanger
                 );
@@ -169,13 +169,13 @@ public class FishingGame
             else
             {
                 cardToPlay =
-                    CurrentPlayer.Hand.FirstOrDefault(c => _turnManager.IsValidePlay(c, Board.DepositeStack.TopCard));
+                    CurrentPlayer.Hand.FirstOrDefault(c => _turnManager.IsValidePlay(c, Board.DepositStack.TopCard));
             }
 
             if (cardToPlay.HasValue)
             {
                 CurrentPlayer.RemoveCard(cardToPlay.Value);
-                Board.DepositeStack.Push(cardToPlay.Value);
+                Board.DepositStack.Push(cardToPlay.Value);
                 lastMessage =
                     $"{CurrentPlayer.FirstName} a joué {cardToPlay.Value.Value.GetName()} de {cardToPlay.Value.Color}";
                 NotifyMessage(lastMessage);
@@ -183,7 +183,7 @@ public class FishingGame
                 {
                     CardColor color = CurrentPlayer.Strategy.ChooseColor(
                         CurrentPlayer.Hand,
-                        Board.DepositeStack.TopCard,
+                        Board.DepositStack.TopCard,
                         (card, top) => _turnManager.IsValidePlay(card, top),
                         isOpponentInDanger
                     );
@@ -195,7 +195,7 @@ public class FishingGame
                 {
                     await Task.Delay(500);
                     _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage,
-                        Board.DepositeStack.TopCard.Color);
+                        Board.DepositStack.TopCard.Color);
                 }
 
                 if (CurrentPlayer.Hand.Count == 1)
@@ -214,7 +214,7 @@ public class FishingGame
             {
                 if (Board.DrawStack.Count == 0)
                 {
-                    List<Card> recycledCards = Board.DepositeStack.TakeAllExcepTop();
+                    List<Card> recycledCards = Board.DepositStack.TakeAllExcepTop();
                     Board.DrawStack.Refill(recycledCards);
                     lastMessage = "Pioche vide : recyclage de la pile de dépôt.";
                 }

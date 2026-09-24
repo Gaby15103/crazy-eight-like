@@ -4,7 +4,7 @@ namespace crazy_eights.GameEngine;
 /// <summary>
 /// La pile de dépôt du jeu de carte
 /// </summary>
-public class DepositeStack
+public class DepositStack
 {
     /// <summary>
     /// La liste des cartes dans la pile de dépôt
@@ -17,7 +17,7 @@ public class DepositeStack
     /// <exception cref="InvalidOperationException">Si la pile de dépôt est vide</exception>
     public Card TopCard;
 
-    public DepositeStack(List<Card> initialCards)
+    public DepositStack(List<Card> initialCards)
     {
         _cards = initialCards ?? new List<Card>();
         TopCard = _cards[^1];

@@ -1,0 +1,336 @@
+@startuml
+title Diagramme de classes — Paire de Cartes
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' =========================================================
+' PACKAGE MODELS
+' =========================================================
+
+package "paire_de_cartes.Models" as Models {
+
+    enum CardValue {
+        As
+        Two
+        Three
+        Four
+        Five
+        Six
+        Seven
+        Eight
+        Nine
+        Ten
+        Jack
+        Queen
+        King
+    }
+
+    struct CardColor {
+        + string Name
+        --
+        {static} + CardColor Clubs
+        {static} + CardColor Diamonds
+        {static} + CardColor Hearts
+        {static} + CardColor Spades
+        + string GetSymbol()
+        + bool Equals(CardColor other)
+    }
+
+    struct Card {
+        + CardColor Color
+        + CardValue Value
+        - CardColor _baseColor
+        + string Name <<get>>
+        + int Points <<get>>
+        --
+        + void Reset()
+        + Card WithColor(CardColor newColor)
+    }
+
+    class Person {
+        + string Id
+        + string FirstName
+        + string LastName
+        --
+        + string GetFullName()
+    }
+
+    class Player {
+        - List<Card> _hand
+        + IReadOnlyList<Card> Hand <<get>>
+        + int Score
+        + IPlayerStrategy Strategy
+        --
+        + bool CanPlayTwo()
+        + void AddCard(Card card)
+        + void RemoveCard(Card card)
+    }
+
+    Person <|-- Player : hérite de
+    Player o-- "0..*" Card : possède en main
+
+    Card *-- CardColor : contient
+    Card *-- CardValue : contient
+}
+
+' =========================================================
+' PACKAGE STRATEGIES
+' =========================================================
+
+package "paire_de_cartes.Strategies" as Strategies {
+
+    interface IPlayerStrategy {
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(
+          IEnumerable<Card> hand,
+          Card topCard,
+          Func<Card, Card, bool> isValidPlay,
+          bool isOpponentInDanger)
+        + CardColor ChooseColor(
+          IEnumerable<Card> hand,
+          Card topCard,
+          Func<Card, Card, bool> isValidPlay,
+          bool isOpponentInDanger)
+    }
+
+    class RandomStrategy {
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(...)
+        + CardColor ChooseColor(...)
+    }
+
+    class MinimizingPointsStrategy {
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(...)
+        + CardColor ChooseColor(...)
+    }
+
+    class MaxColorStrategy {
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(...)
+        + CardColor ChooseColor(...)
+    }
+
+    class ActionCardPriorityStrategy {
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(...)
+        + CardColor ChooseColor(...)
+    }
+
+    class DangerAwareStrategyDecorator {
+        - IPlayerStrategy _innerStrategy
+        - IPlayerStrategy _dangerStrategy
+        - Func<bool> _isAnyOpponentInDanger
+        + string Name <<get>>
+        --
+        + Card? ChooseCard(...)
+        + CardColor ChooseColor(...)
+    }
+
+    IPlayerStrategy <|.. RandomStrategy : implémente
+    IPlayerStrategy <|.. MinimizingPointsStrategy : implémente
+    IPlayerStrategy <|.. MaxColorStrategy : implémente
+    IPlayerStrategy <|.. ActionCardPriorityStrategy : implémente
+    IPlayerStrategy <|.. DangerAwareStrategyDecorator : implémente
+
+    DangerAwareStrategyDecorator o-- IPlayerStrategy : stratégie principale
+    DangerAwareStrategyDecorator o-- IPlayerStrategy : stratégie de danger
+}
+
+' Relations entre Models et Strategies
+Models.Player --> Strategies.IPlayerStrategy : utilise
+
+' =========================================================
+' PACKAGE GAME ENGINE
+' =========================================================
+
+package "paire_de_cartes.GameEngine" as GameEngine {
+
+    class CardPair {
+        + List<Card> Generate52Cards()
+    }
+
+    class DrawStack {
+        - List<Card> _cards
+        + int Count <<get>>
+        --
+        + Card DrawCard()
+        + void Refill(List<Card> recycledCards)
+        + void Shuffle()
+    }
+
+    class DepositStack {
+        - List<Card> _cards
+        + Card TopCard
+        --
+        + void Push(Card card)
+        + List<Card> TakeAllExcepTop()
+        + void SetTopCardColor(CardColor newColor)
+    }
+
+    class GameBoard {
+        + List<Player> Players <<get>>
+        + DrawStack DrawStack <<get>>
+        + DepositStack DepositStack <<get>>
+        + bool IsClockwise <<get>>
+        --
+        + void ReverseTurnOrder()
+        + int GetNextPlayerIndex(int currentIndex)
+    }
+
+    class TurnManager {
+        + bool IsValidePlay(
+          Card cardToPlay,
+          Card topDepositCard)
+        + void ApplyCardEffect(
+          Card playedCard,
+          GameBoard board,
+          ref int currentPlayerIndex,
+          Action<string, MessageType> notifyMessage,
+          CardColor newCardColor)
+    }
+
+    class GameConfig {
+        + int PlayerCount
+        + int InitialHandSize
+        + List<IPlayerStrategy> PlayerStrategies
+    }
+
+    enum MessageType {
+        Play
+        Effect
+        System
+    }
+
+    class GameEventArgs {
+        + string Message <<get>>
+        + MessageType Type <<get>>
+        --
+        + string ToString()
+    }
+
+    class FishingGame {
+        + GameBoard Board
+        - TurnManager _turnManager
+        + bool IsRunning <<get>>
+        + Player CurrentPlayer <<get>>
+        --
+        + Task StartGameAsync()
+        # void NotifyMessage(
+          string message,
+          MessageType type)
+        --
+        + event EventHandler<GameEventArgs> OnMessageLogged
+        + event EventHandler<Player> OnOneCardLeft
+        + event EventHandler<Player> OnGameEnded
+    }
+
+    class GameTuiView {
+        - ObservableCollection<GameEventArgs> _logMessages
+        --
+        + void Initialize()
+        + void UpdateBoard(
+          GameBoard board,
+          string currentPlayerName,
+          GameEventArgs actionMessage,
+          IReadOnlyList<Card> activePlayerHand,
+          string activePlayerStrategyName)
+        + void Run()
+        + void Shutdown()
+    }
+
+    CardPair ..> Card : crée
+
+    DrawStack o-- "0..*" Card : contient
+    DepositStack o-- "0..*" Card : contient
+
+    GameBoard *-- "1..*" Player : contient
+    GameBoard *-- "1" DrawStack : possède
+    GameBoard *-- "1" DepositStack : possède
+
+    FishingGame *-- "1" GameBoard : initialise
+    FishingGame *-- "1" TurnManager : utilise
+    FishingGame ..> CardPair : utilise
+    FishingGame ..> GameConfig : utilise
+    FishingGame ..> GameEventArgs : publie
+
+    TurnManager --> GameBoard : modifie
+    TurnManager ..> Card : applique les effets
+    GameConfig --> IPlayerStrategy : configure
+    GameEventArgs --> MessageType : catégorise
+
+    GameTuiView --> GameBoard : affiche
+    GameTuiView --> GameEventArgs : affiche les messages
+}
+
+' =========================================================
+' SOUS-PACKAGE GAME ENGINE.MENU
+' =========================================================
+
+package "paire_de_cartes.GameEngine.Menu" as Menu {
+
+    abstract class MenuItem {
+        + string Name
+        + bool IsExit
+        --
+        + string GetDisplayString()
+        + void OnSelected()
+        + void HandleLeftRight(bool isRight)
+    }
+
+    class ActionMenuItem {
+        - Action _action
+        --
+        + string GetDisplayString()
+        + void OnSelected()
+    }
+
+    class IntegerSelectorMenuItem {
+        - int _value
+        - int _min
+        - int _max
+        + int Value <<get>>
+        --
+        + string GetDisplayString()
+        + void OnSelected()
+        + void HandleLeftRight(bool isRight)
+    }
+
+    class Menu {
+        - string _title
+        - List<MenuItem> _items
+        - Action _headerAction
+        - int _selectedIndex
+        --
+        + void Run()
+        + void WriteTemporaryMessage(
+          string message,
+          int milliseconds)
+    }
+
+    MenuItem <|-- ActionMenuItem : hérite de
+    MenuItem <|-- IntegerSelectorMenuItem : hérite de
+
+    Menu *-- "0..*" MenuItem : contient
+}
+
+' =========================================================
+' RELATIONS EXPLICITES ENTRE PACKAGES
+' =========================================================
+
+GameEngine.GameBoard ..> Models.Player
+GameEngine.DrawStack ..> Models.Card
+GameEngine.DepositStack ..> Models.Card
+GameEngine.CardPair ..> Models.Card
+GameEngine.GameConfig ..> Strategies.IPlayerStrategy
+GameEngine.TurnManager ..> Models.Card
+GameEngine.GameEventArgs ..> GameEngine.MessageType
+
+@enduml

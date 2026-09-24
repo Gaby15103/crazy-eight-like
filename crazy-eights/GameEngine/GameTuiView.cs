@@ -144,7 +144,7 @@ public class GameTuiView
 
         _lblDraw.Text = $"Pioche\n┌──────┐\n│      │\n│  🂠  │\n│ {board.DrawStack.Count,3}  │\n│      │\n└──────┘";
         
-        var topCard = board.DepositeStack.TopCard;
+        var topCard = board.DepositStack.TopCard;
         string shortVal = topCard.Value.GetShortName().PadRight(2);
                            
         _lblDiscard.Text = $"Dépôt\n┌──────┐\n│      │\n│     │\n│ {shortVal,3}  │\n│      │\n└──────┘";

@@ -17,18 +17,18 @@ public class GameBoard
     /// <summary>
     /// La pile de dépôt où les joueurs placent leur carte joué
     /// </summary>
-    public DepositeStack DepositeStack { get; }
+    public DepositStack DepositStack { get; }
     /// <summary>
     /// Si le jeux est en sens horaire
     /// </summary>
     public bool IsClockwise { get; private set; }
 
 
-    public GameBoard(List<Player> players, DrawStack drawStack, DepositeStack depositeStack)
+    public GameBoard(List<Player> players, DrawStack drawStack, DepositStack depositStack)
     {
         Players = players ?? new List<Player>();
         DrawStack = drawStack;
-        DepositeStack = depositeStack;
+        DepositStack = depositStack;
         IsClockwise = true;
     }
     /// <summary>
