@@ -1,19 +1,32 @@
 using crazy_eights.Models;
 
 namespace crazy_eights.Strategies;
+
 /// <summary>
-/// Strategy ou le but est d'utiliser une carte au hasard dans les cartes jouable
+/// Stratégie sélectionnant de manière aléatoire une carte valide parmi les choix disponibles.
 /// </summary>
 public class RandomStrategy : IPlayerStrategy
 {
+    /// <inheritdoc/>
     public string Name { get; } = "Priorité random";
+    
     /// <summary>
-    /// Nouvelle instance de pseudo-random
+    /// Instance de générateur pseudo-aléatoire.
     /// </summary>
-    private Random _random = new();
+    private readonly Random _random = new();
+    
+    private readonly ActionCardPriorityStrategy _emergencyStrategy = new();
 
-    public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
+    /// <inheritdoc/>
+    public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
+        bool isOpponentInDanger = false)
     {
+        if (isOpponentInDanger)
+        {
+            var actionCard = _emergencyStrategy.ChooseCard(hand, topCard, isValidPlay);
+            if (actionCard.HasValue) return actionCard;
+        }
+        
         var validCards = hand.Where(c => isValidPlay(c, topCard)).ToList();
         if (!validCards.Any()) return null;
         
@@ -21,9 +34,11 @@ public class RandomStrategy : IPlayerStrategy
         return validCards[index];
     }
 
-    public CardColor ChooseColor(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
+    /// <inheritdoc/>
+    public CardColor ChooseColor(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
+        bool isOpponentInDanger = false)
     {
-        var bestCard = this.ChooseCard(hand, topCard, isValidPlay);
+        var bestCard = this.ChooseCard(hand, topCard, isValidPlay, isOpponentInDanger);
         if (bestCard.HasValue)
         {
             return bestCard.Value.Color;

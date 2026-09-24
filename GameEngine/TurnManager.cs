@@ -6,7 +6,8 @@ public class TurnManager
 {
     public bool IsValidePlay(Card cardToPlay, Card topDepositCard)
     {
-        return cardToPlay.Color.Name == topDepositCard.Color.Name || cardToPlay.Value == topDepositCard.Value ||
+        return cardToPlay.Color.Name == topDepositCard.Color.Name ||
+               cardToPlay.Value == topDepositCard.Value ||
                cardToPlay.Value == CardValue.Jack;
     }
 
@@ -19,57 +20,73 @@ public class TurnManager
             case CardValue.Ten:
                 board.ReverseTurnOrder();
                 notifyMessage(
-                    $"{currentPlayer.FirstName} a changé le sense du jeu à {(board.IsClockwise ? "Horaires ↻" : "Anti-horaires ↺")}",
+                    $"{currentPlayer.FirstName} a changé le sens du jeu à {(board.IsClockwise ? "Horaires ↻" : "Anti-horaires ↺")}",
                     MessageType.Effect
-                    );
+                );
+                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 break;
             case CardValue.As:
+                int skippedIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 notifyMessage(
-                    $"{currentPlayer.FirstName} fait sauté son tour à {board.Players[board.GetNextPlayerIndex(currentPlayerIndex)].FirstName}",
+                    $"{currentPlayer.FirstName} fait sauter le tour de {board.Players[skippedIndex].FirstName}",
                     MessageType.Effect
-                    );
-                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
+                );
+                currentPlayerIndex = board.GetNextPlayerIndex(skippedIndex);
                 break;
             case CardValue.Two:
                 int nbCardToDraw = 2;
+                int targetIndex = board.GetNextPlayerIndex(currentPlayerIndex);
+
                 notifyMessage(
-                    $"{currentPlayer.FirstName} fait pigé {nbCardToDraw} cart à {board.Players[board.GetNextPlayerIndex(currentPlayerIndex)].FirstName}",
+                    $"{currentPlayer.FirstName} attaque {board.Players[targetIndex].FirstName} avec un 2 ({nbCardToDraw} cartes) !",
                     MessageType.Effect
                 );
-                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
+
+                currentPlayerIndex = targetIndex;
+
                 while (board.Players[currentPlayerIndex].CanPlayTwo())
                 {
-                    Card cardToPlay = board.Players[currentPlayerIndex].Hand.FirstOrDefault(c => c.Value == CardValue.Two);
-                    board.Players[currentPlayerIndex].RemoveCard(cardToPlay);
-                    board.DepositeStack.Push(cardToPlay);
+                    Player defendingPlayer = board.Players[currentPlayerIndex];
+                    Card counterCard = defendingPlayer.Hand.First(c => c.Value == CardValue.Two);
+
+                    defendingPlayer.RemoveCard(counterCard);
+                    board.DepositeStack.Push(counterCard);
+
                     notifyMessage(
-                        $"{currentPlayer.FirstName} a joué {cardToPlay.Value.GetName()} de {cardToPlay.Color}",
-                        MessageType.Play);
-                    nbCardToDraw += 2;
-                    notifyMessage(
-                        $"{currentPlayer.FirstName} fait pigé {nbCardToDraw} cart à {board.Players[board.GetNextPlayerIndex(currentPlayerIndex)].FirstName}",
-                        MessageType.Effect
+                        $"{defendingPlayer.FirstName} contre avec un Deux de {counterCard.Color} ! La peine monte à {nbCardToDraw + 2} cartes.",
+                        MessageType.Play
                     );
+
+                    nbCardToDraw += 2;
                     currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
-                    Task.Delay(1000);
+                    Thread.Sleep(500);
                 }
+
+                Player victim = board.Players[currentPlayerIndex];
+                notifyMessage($"{victim.FirstName} doit piocher les {nbCardToDraw} cartes de pénalité.",
+                    MessageType.Effect);
+
                 for (int i = 0; i < nbCardToDraw; i++)
                 {
-                    Card drawnCard = board.DrawStack.DrawCard();
-                    board.Players[currentPlayerIndex].AddCard(drawnCard);
+                    if (board.DrawStack.Count > 0)
+                    {
+                        victim.AddCard(board.DrawStack.DrawCard());
+                    }
                 }
+
+                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 break;
             case CardValue.Jack:
                 notifyMessage(
-                    $"{currentPlayer.FirstName} à changer la couleur à {newCardColor.ToString()}",
+                    $"{currentPlayer.FirstName} a changé la couleur pour {newCardColor}",
                     MessageType.Effect
                 );
-                board.DepositeStack.TopCard.Color = newCardColor;
+                board.DepositeStack.SetTopCardColor(newCardColor);
+                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 break;
             default:
+                currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
                 break;
         }
-
-        currentPlayerIndex = board.GetNextPlayerIndex(currentPlayerIndex);
     }
 }

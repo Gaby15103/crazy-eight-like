@@ -12,14 +12,16 @@ public struct Card
     /// La valeur de la carte
     /// </summary>
     public CardValue  Value;
-
-    private readonly CardColor _originalColor; 
+    /// <summary>
+    /// Couleur de base de la carte
+    /// </summary>
+    private readonly CardColor _baseColor;
     /// <summary>
     /// Nom complet de la carte
     /// </summary>
     public string Name => $"{Value.GetName()} de {Color.Name}";
     /// <summary>
-    /// Le nombre de point que vaut cette carte
+    /// Le nombre de points que vaut cette carte
     /// </summary>
     public int Points => Value.GetPoints();
     
@@ -27,13 +29,34 @@ public struct Card
     {
         Color = color;
         Value = cardValue;
-        _originalColor = Color;
+        _baseColor = Color;
+    }
+    /// <summary>
+    /// Constructeur intern
+    /// </summary>
+    /// <param name="color">Couleur active de la carte</param>
+    /// <param name="cardValue">La valeur de la carte</param>
+    /// <param name="baseColor">la couleur de base de la carte</param>
+    private Card(CardColor color, CardValue cardValue, CardColor baseColor)
+    {
+        Color = color;
+        Value = cardValue;
+        _baseColor = baseColor;
     }
     /// <summary>
     /// Retourne une carte a sa couleur original
     /// </summary>
     public void Reset()
     {
-        Color = _originalColor;
+        Color = _baseColor;
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="newColor"></param>
+    /// <returns></returns>
+    public Card WithColor(CardColor newColor)
+    {
+        return new Card(newColor, Value, _baseColor);
     }
 }

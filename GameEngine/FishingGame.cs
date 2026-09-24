@@ -104,13 +104,18 @@ public class FishingGame
             await Task.Delay(2000);
 
             Card? cardToPlay = null;
+            
+            bool isOpponentInDanger = Board.Players
+                .Where(p => p != CurrentPlayer)
+                .Any(p => p.Hand.Count == 1);
 
             if (CurrentPlayer.Strategy != null)
             {
                 cardToPlay = CurrentPlayer.Strategy.ChooseCard(
                     CurrentPlayer.Hand,
                     Board.DepositeStack.TopCard,
-                    (card, top) => _turnManager.IsValidePlay(card, top)
+                    (card, top) => _turnManager.IsValidePlay(card, top),
+                    isOpponentInDanger
                 );
             }
             else
@@ -131,7 +136,8 @@ public class FishingGame
                     CardColor color = CurrentPlayer.Strategy.ChooseColor(
                         CurrentPlayer.Hand,
                         Board.DepositeStack.TopCard,
-                        (card, top) => _turnManager.IsValidePlay(card, top)
+                        (card, top) => _turnManager.IsValidePlay(card, top),
+                        isOpponentInDanger
                     );
                     await Task.Delay(500);
                     _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage,

@@ -51,4 +51,18 @@ public class DepositeStack
         
         return recycledCards;
     }
+    /// <summary>
+    /// Change la couleur de la carte du dessus
+    /// </summary>
+    /// <param name="newColor"></param>
+    public void SetTopCardColor(CardColor newColor)
+    {
+        if (_cards.Count > 0)
+        {
+            var updatedCard = _cards[^1].WithColor(newColor);
+            
+            _cards[^1] = updatedCard;
+            TopCard = updatedCard;
+        }
+    }
 }
