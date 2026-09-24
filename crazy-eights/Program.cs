@@ -120,8 +120,27 @@ class Program
 
         game.OnGameEnded += (sender, winner) =>
         {
+            foreach (var p in game.Board.Players)
+            {
+                p.Score = p.Hand.Sum(c => c.Points);
+            }
+            
+            var rankedPlayers = game.Board.Players.OrderBy(p => p.Score).ToList();
+            
+            StringBuilder endMessage = new StringBuilder();
+            endMessage.AppendLine($"FIN DE PARTIE ! Gagnant : {winner.FirstName} {winner.LastName}\n");
+            endMessage.AppendLine("--- CLASSEMENT FINAL ---");
+
+            for (int i = 0; i < rankedPlayers.Count; i++)
+            {
+                var rankedPlayer = rankedPlayers[i];
+                string positionSuffix = i == 0 ? "1er 🏆" : $"{i + 1}e";
+                endMessage.AppendLine($"{positionSuffix} : {rankedPlayer.FirstName} {rankedPlayer.LastName} - {rankedPlayer.Score} points ({rankedPlayer.Hand.Count} cartes en main)");
+            }
+            
             tuiView.UpdateBoard(game.Board, winner.FirstName,
-                new ($"FIN DE PARTIE ! Gagnant : {winner.FirstName} {winner.LastName}", MessageType.System), winner.Hand, winner.Strategy.Name);
+                new (endMessage.ToString(), MessageType.System), winner.Hand, winner.Strategy.Name);
+            
             Console.ReadKey();
             tuiView.Shutdown();
         };

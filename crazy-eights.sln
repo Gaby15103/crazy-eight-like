@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crazy-eights", "crazy-eights.csproj", "{26864BF5-2164-401A-9713-1EF36BE8A241}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crazy-eights", "crazy-eights\crazy-eights.csproj", "{26864BF5-2164-401A-9713-1EF36BE8A241}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6774F4DC-0046-442C-AC2C-3DB3E2CF4366}"
 	ProjectSection(SolutionItems) = preProject
 		compose.yaml = compose.yaml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crazy_eights.Tests", "crazy_eights.Tests\crazy_eights.Tests.csproj", "{396FB2C0-11B0-4E66-B768-D97829CCD694}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,5 +19,9 @@ Global
 		{26864BF5-2164-401A-9713-1EF36BE8A241}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26864BF5-2164-401A-9713-1EF36BE8A241}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26864BF5-2164-401A-9713-1EF36BE8A241}.Release|Any CPU.Build.0 = Release|Any CPU
+		{396FB2C0-11B0-4E66-B768-D97829CCD694}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{396FB2C0-11B0-4E66-B768-D97829CCD694}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{396FB2C0-11B0-4E66-B768-D97829CCD694}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{396FB2C0-11B0-4E66-B768-D97829CCD694}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

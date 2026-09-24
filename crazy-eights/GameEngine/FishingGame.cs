@@ -83,6 +83,47 @@ public class FishingGame
         CurrentPlayer = Board.Players[rnd.Next(0, Board.Players.Count)];
         IsRunning = true;
     }
+    
+    public FishingGame(List<Player> players, GameConfig config, bool shuffleDeck = true)
+    {
+        CardPair cardPair = new CardPair();
+        List<Card> allCards = cardPair.Generate52Cards();
+
+        DrawStack drawStack = new DrawStack(allCards);
+        if (shuffleDeck)
+        {
+            drawStack.Shuffle();
+        }
+        
+        foreach (Player player in players)
+        {
+            if (player.Hand.Count == 0)
+            {
+                for (int i = 0; i < config.InitialHandSize; i++)
+                {
+                    if (drawStack.Count > 0)
+                    {
+                        player.AddCard(drawStack.DrawCard());
+                    }
+                }
+            }
+        }
+
+        List<Card> initialDeposite = new List<Card>();
+        if (drawStack.Count > 0)
+        {
+            initialDeposite.Add(drawStack.DrawCard());
+        }
+
+        DepositeStack depositeStack = new DepositeStack(initialDeposite);
+
+        Board = new GameBoard(players, drawStack, depositeStack);
+        _turnManager = new TurnManager();
+    
+        // Possibilité de fixer le joueur de départ pour les tests
+        CurrentPlayer = Board.Players[0];
+        IsRunning = true;
+    }
 
     /// <summary>
     /// Lance la boucle de jeu principale de manière asynchrone.
