@@ -1,5 +1,5 @@
 @startuml
-title Diagramme de classes — Paire de Cartes
+title Diagramme de classes — Paire de Cartes avec Pattern Observateur
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
@@ -148,6 +148,89 @@ package "paire_de_cartes.Strategies" as Strategies {
 Models.Player --> Strategies.IPlayerStrategy : utilise
 
 ' =========================================================
+' PACKAGE OBSERVERS (NOUVEAU)
+' =========================================================
+
+package "paire_de_cartes.GameEngine.Observers" as Observers {
+
+    enum GameState {
+        Started
+        PlayerTurn
+        CardPlayed
+        CardDrawn
+        SpecialEffectApplied
+        OneCardLeft
+        Completed
+    }
+
+    class GameMessageEventArgs {
+        + string Message <<get>>
+        + MessageType Type <<get>>
+        + DateTime Timestamp <<get>>
+        --
+        + string ToString()
+    }
+
+    class GameStateChangedEventArgs {
+        + GameState State <<get>>
+        + Player? AffectedPlayer <<get>>
+        + DateTime Timestamp <<get>>
+        --
+        + string ToString()
+    }
+
+    interface IGameObserver {
+        + void OnGameMessage(GameMessageEventArgs args)
+        + void OnGameStateChanged(GameStateChangedEventArgs args)
+        + void OnPlayerInDanger(Player player)
+        + void OnGameEnded(Player winner)
+    }
+
+    interface IGameEventPublisher {
+        + void Subscribe(IGameObserver observer)
+        + void Unsubscribe(IGameObserver observer)
+        + void PublishMessage(string message, MessageType type)
+        + void PublishStateChange(GameState state, Player? affectedPlayer)
+        + void PublishPlayerInDanger(Player player)
+        + void PublishGameEnded(Player winner)
+    }
+
+    class GameEventPublisher {
+        - List<IGameObserver> _observers
+        --
+        + void Subscribe(IGameObserver observer)
+        + void Unsubscribe(IGameObserver observer)
+        + void PublishMessage(string message, MessageType type)
+        + void PublishStateChange(GameState state, Player? affectedPlayer)
+        + void PublishPlayerInDanger(Player player)
+        + void PublishGameEnded(Player winner)
+        - void NotifyAllObservers(Action<IGameObserver> action)
+    }
+
+    class GameTuiObserver {
+        - GameTuiView _tuiView
+        - GameBoard _gameBoard
+        --
+        + void OnGameMessage(GameMessageEventArgs args)
+        + void OnGameStateChanged(GameStateChangedEventArgs args)
+        + void OnPlayerInDanger(Player player)
+        + void OnGameEnded(Player winner)
+    }
+
+    IGameEventPublisher <|.. GameEventPublisher : implémente
+    IGameObserver <|.. GameTuiObserver : implémente
+
+    GameEventPublisher o-- "0..*" IGameObserver : notifie
+
+    GameMessageEventArgs --> GameEngine.MessageType : contient
+    GameStateChangedEventArgs --> GameState : utilise
+    GameStateChangedEventArgs --> Models.Player : affecte
+
+    GameTuiObserver --> GameEngine.GameTuiView : met à jour
+    GameTuiObserver --> GameEngine.GameBoard : affiche
+}
+
+' =========================================================
 ' PACKAGE GAME ENGINE
 ' =========================================================
 
@@ -219,17 +302,22 @@ package "paire_de_cartes.GameEngine" as GameEngine {
     class FishingGame {
         + GameBoard Board
         - TurnManager _turnManager
+        - GameEventPublisher _eventPublisher
         + bool IsRunning <<get>>
         + Player CurrentPlayer <<get>>
         --
         + Task StartGameAsync()
-        # void NotifyMessage(
-          string message,
-          MessageType type)
+        + void Subscribe(IGameObserver observer)
+        + void Unsubscribe(IGameObserver observer)
+        + void PublishMessage(string message, MessageType type)
+        + void PublishStateChange(GameState state, Player? affectedPlayer)
+        + void PublishPlayerInDanger(Player player)
+        + void PublishGameEnded(Player winner)
+        # void NotifyMessage(string message, MessageType type)
         --
-        + event EventHandler<GameEventArgs> OnMessageLogged
-        + event EventHandler<Player> OnOneCardLeft
-        + event EventHandler<Player> OnGameEnded
+        + event EventHandler<GameEventArgs> OnMessageLogged (legacy)
+        + event EventHandler<Player> OnOneCardLeft (legacy)
+        + event EventHandler<Player> OnGameEnded (legacy)
     }
 
     class GameTuiView {
@@ -257,9 +345,11 @@ package "paire_de_cartes.GameEngine" as GameEngine {
 
     FishingGame *-- "1" GameBoard : initialise
     FishingGame *-- "1" TurnManager : utilise
+    FishingGame --> Observers.IGameEventPublisher : implémente
+    FishingGame *-- "1" Observers.GameEventPublisher : utilise
     FishingGame ..> CardPair : utilise
     FishingGame ..> GameConfig : utilise
-    FishingGame ..> GameEventArgs : publie
+    FishingGame ..> GameEventArgs : publie (legacy)
 
     TurnManager --> GameBoard : modifie
     TurnManager ..> Card : applique les effets
@@ -267,7 +357,7 @@ package "paire_de_cartes.GameEngine" as GameEngine {
     GameEventArgs --> MessageType : catégorise
 
     GameTuiView --> GameBoard : affiche
-    GameTuiView --> GameEventArgs : affiche les messages
+    GameTuiView --> GameEventArgs : affiche les messages (legacy)
 }
 
 ' =========================================================
@@ -332,5 +422,11 @@ GameEngine.CardPair ..> Models.Card
 GameEngine.GameConfig ..> Strategies.IPlayerStrategy
 GameEngine.TurnManager ..> Models.Card
 GameEngine.GameEventArgs ..> GameEngine.MessageType
+
+' Pattern Observateur
+GameEngine.FishingGame --> Observers.IGameEventPublisher : implémente
+Observers.GameEventPublisher --> Observers.IGameObserver : notifie
+Observers.IGameObserver <|.. Observers.GameTuiObserver : implémente
+Observers.GameTuiObserver --> GameEngine.GameTuiView : met à jour
 
 @enduml
