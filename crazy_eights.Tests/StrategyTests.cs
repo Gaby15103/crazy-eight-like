@@ -1,7 +1,7 @@
 ﻿using crazy_eights.Models;
 using crazy_eights.Strategies;
 using Xunit;
-
+namespace crazy_eights.Tests;
 public class StrategyTests
 {
     [Fact]

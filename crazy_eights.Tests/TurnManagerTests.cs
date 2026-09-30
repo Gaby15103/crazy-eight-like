@@ -1,7 +1,7 @@
 ﻿using crazy_eights.GameEngine;
 using crazy_eights.Models;
 using Xunit;
-
+namespace crazy_eights.Tests;
 public class TurnManagerTests
 {
     [Theory]
