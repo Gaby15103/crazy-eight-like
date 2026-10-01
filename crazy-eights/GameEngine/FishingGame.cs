@@ -182,8 +182,8 @@ public class FishingGame
         {
             CurrentPlayer = Board.Players[currentPlayerIndex];
 
-            OnCurrentPlayerChanged?.Invoke(this, CurrentPlayer);
-            OnDrawPileSizeChanged?.Invoke(this, Board.DrawStack.Count);
+            RaiseCurrentPlayerChanged(CurrentPlayer);
+            RaiseDrawPileSizeChanged(Board.DrawStack.Count);
 
             await Task.Delay(2000);
 
@@ -199,6 +199,8 @@ public class FishingGame
                 CurrentPlayer.RemoveCard(cardToPlay.Value);
                 Board.DepositStack.Push(cardToPlay.Value);
                 
+                RaiseCardPlayed(cardToPlay.Value, CurrentPlayer.Id);
+                
                 NotifyMessage($"{CurrentPlayer.FirstName} a joué {cardToPlay.Value.Value.GetName()} de {cardToPlay.Value.Color}");
                 
                 if (cardToPlay.Value.Value == CardValue.Jack)
@@ -210,13 +212,13 @@ public class FishingGame
                         (card, top) => _turnManager.IsValidePlay(card, top)
                     );
                     await Task.Delay(500);
-                    _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage, color);
+                    _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage, color, RaiseDirectionChanged);
                 }
                 else
                 {
                     await Task.Delay(500);
                     _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage,
-                        Board.DepositStack.TopCard.Color);
+                        Board.DepositStack.TopCard.Color, RaiseDirectionChanged);
                 }
 
                 if (CurrentPlayer.Hand.Count == 1)
@@ -245,8 +247,8 @@ public class FishingGame
                     Card drawnCard = Board.DrawStack.DrawCard();
                     CurrentPlayer.AddCard(drawnCard);
                     
-                    OnCardDrawn?.Invoke(this, drawnCard);
-                    OnDrawPileSizeChanged?.Invoke(this, Board.DrawStack.Count);
+                    RaiseCardDrawn(drawnCard);
+                    RaiseDrawPileSizeChanged(Board.DrawStack.Count);
 
                     
                     NotifyMessage($"{CurrentPlayer.FirstName} a pioché une carte.");
@@ -261,6 +263,46 @@ public class FishingGame
                 currentPlayerIndex = Board.GetNextPlayerIndex(currentPlayerIndex);
             }
         }
+    }
+    
+    /// <summary>
+    /// Raises the OnCardPlayed event. Protected so subclasses can use it.
+    /// </summary>
+    protected void RaiseCardPlayed(Card card, string playerId)
+    {
+        OnCardPlayed?.Invoke(this, (card, playerId));
+    }
+
+    /// <summary>
+    /// Raises the OnCardDrawn event. Protected so subclasses can use it.
+    /// </summary>
+    protected void RaiseCardDrawn(Card card)
+    {
+        OnCardDrawn?.Invoke(this, card);
+    }
+
+    /// <summary>
+    /// Raises the OnDirectionChanged event. Protected so subclasses can use it.
+    /// </summary>
+    protected void RaiseDirectionChanged(bool isClockwise)
+    {
+        OnDirectionChanged?.Invoke(this, isClockwise);
+    }
+
+    /// <summary>
+    /// Raises the OnDrawPileSizeChanged event. Protected so subclasses can use it.
+    /// </summary>
+    protected void RaiseDrawPileSizeChanged(int size)
+    {
+        OnDrawPileSizeChanged?.Invoke(this, size);
+    }
+
+    /// <summary>
+    /// Raises the OnCurrentPlayerChanged event. Protected so subclasses can use it.
+    /// </summary>
+    protected void RaiseCurrentPlayerChanged(Player player)
+    {
+        OnCurrentPlayerChanged?.Invoke(this, player);
     }
 
     /// <summary>

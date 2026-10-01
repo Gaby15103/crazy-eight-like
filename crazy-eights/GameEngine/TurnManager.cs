@@ -18,6 +18,7 @@ public class TurnManager
                cardToPlay.Value == topDepositCard.Value ||
                cardToPlay.Value == CardValue.Jack;
     }
+
     /// <summary>
     /// Applique l'effet associé à une carte jouée.
     /// </summary>
@@ -26,14 +27,16 @@ public class TurnManager
     /// <param name="currentPlayerIndex">L'index du joueur actuel.</param>
     /// <param name="notifyMessage">Action de notification pour informer les joueurs d'un événement ou d'un effet.</param>
     /// <param name="newCardColor">La nouvelle couleur choisie, si changé.</param>
+    /// <param name="raiseDirectionChangedCallback">Une action de type Action prenant un booléen en paramètre, appelée pour notifier d'un changement de sens du jeu.</param>
     public void ApplyCardEffect(Card playedCard, GameBoard board, ref int currentPlayerIndex,
-        Action<string, MessageType> notifyMessage, CardColor newCardColor)
+        Action<string, MessageType> notifyMessage, CardColor newCardColor, Action<bool> raiseDirectionChangedCallback)
     {
         Player currentPlayer = board.Players[currentPlayerIndex];
         switch (playedCard.Value)
         {
             case CardValue.Ten:
                 board.ReverseTurnOrder();
+                raiseDirectionChangedCallback(board.IsClockwise);
                 notifyMessage(
                     $"{currentPlayer.FirstName} a changé le sens du jeu à {(board.IsClockwise ? "Horaires ↻" : "Anti-horaires ↺")}",
                     MessageType.Effect

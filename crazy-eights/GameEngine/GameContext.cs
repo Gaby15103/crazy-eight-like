@@ -79,6 +79,14 @@ public class GameContext
         game.OnDirectionChanged += HandleDirectionChanged;
         game.OnDrawPileSizeChanged += HandleDrawPileSizeChanged;
     }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="player"></param>
+    public void SetCurrentPlayer(Player player)
+    {
+        CurrentPlayer = player;
+    }
 
     /// <summary>
     /// Gère le changement de joueur actif et déclenche l'événement de modification du contexte.
