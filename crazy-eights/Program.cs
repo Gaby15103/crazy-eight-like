@@ -84,19 +84,25 @@ class Program
         for (int i = 0; i < playerCount; i++)
         {
             var player = new Player((i + 1).ToString(), names[i], lastNames[i]);
-            int strategyChoice = rand.Next(0, 3);
-            IPlayerStrategy baseStrategy = strategyChoice switch
+    
+            IPlayerStrategy baseStrategy;
+            if (i == 0)
             {
-                0 => new ActionCardPriorityStrategy(),
-                1 => new MaxColorStrategy(),
-                2 => new MinimizingPointsStrategy(),
-                _ => new RandomStrategy()
-            };
-            player.Strategy = new DangerAwareStrategyDecorator(
-                innerStrategy: baseStrategy,
-                isAnyOpponentInDanger: () => false 
-            );
-
+                baseStrategy = new MinimizingPointsStrategy();
+            }
+            else
+            {
+                int strategyChoice = rand.Next(0, 3);
+                baseStrategy = strategyChoice switch
+                {
+                    0 => new ActionCardPriorityStrategy(),
+                    1 => new MaxColorStrategy(),
+                    2 => new MinimizingPointsStrategy(),
+                    _ => new RandomStrategy()
+                };
+            }
+    
+            player.Strategy = new AwarenessBlockingStrategy(baseStrategy);
             players.Add(player);
         }
 

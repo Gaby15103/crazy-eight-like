@@ -11,8 +11,7 @@ public class MinimizingPointsStrategy : IPlayerStrategy
     public string Name { get; } = "Priorité du moins de points possible";
 
     /// <inheritdoc/>
-    public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
-        bool isOpponentInDanger = false)
+    public Card? ChooseCard(GameContext context, IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
     {
         
         var validCards = hand.Where(c => isValidPlay(c, topCard)).ToList();
@@ -22,10 +21,9 @@ public class MinimizingPointsStrategy : IPlayerStrategy
     }
     
     /// <inheritdoc/>
-    public CardColor ChooseColor(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
-        bool isOpponentInDanger = false)
+    public CardColor ChooseColor(GameContext context, IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
     {
-        var bestCard = this.ChooseCard(hand, topCard, isValidPlay, isOpponentInDanger);
+        var bestCard = this.ChooseCard(context, hand, topCard, isValidPlay);
         if (bestCard.HasValue)
         {
             return bestCard.Value.Color;

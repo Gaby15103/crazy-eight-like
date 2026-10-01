@@ -1,4 +1,5 @@
 using crazy_eights.Models;
+using crazy_eights.Strategies;
 
 namespace crazy_eights.GameEngine;
 
@@ -27,6 +28,36 @@ public class FishingGame
     /// Le joueur dont c'est le tour actuel.
     /// </summary>
     public Player CurrentPlayer { get; private set; }
+
+    /// <summary>
+    /// Le Context de la partie en cours
+    /// </summary>
+    private readonly GameContext _context;
+
+    /// <summary>
+    /// Fired when the current player changes.
+    /// </summary>
+    public event EventHandler<Player>? OnCurrentPlayerChanged;
+
+    /// <summary>
+    /// Fired when a card is played.
+    /// </summary>
+    public event EventHandler<(Card card, string playerId)>? OnCardPlayed;
+
+    /// <summary>
+    /// Fired when a card is drawn.
+    /// </summary>
+    public event EventHandler<Card>? OnCardDrawn;
+
+    /// <summary>
+    /// Fired when game direction changes.
+    /// </summary>
+    public event EventHandler<bool>? OnDirectionChanged;
+
+    /// <summary>
+    /// Fired when draw pile size changes.
+    /// </summary>
+    public event EventHandler<int>? OnDrawPileSizeChanged;
 
     /// <summary>
     /// Déclenché lorsqu'un nouveau message d'action ou d'état doit être journalisé.
@@ -78,6 +109,8 @@ public class FishingGame
         DepositStack depositStack = new DepositStack(initialDeposite);
 
         Board = new GameBoard(players, drawStack, depositStack);
+        var awareness = new GameAwarenessTracker(players);
+        _context = new GameContext(players, awareness, this);
         _turnManager = new TurnManager();
         Random rnd = new Random();
         CurrentPlayer = Board.Players[rnd.Next(0, Board.Players.Count)];
@@ -101,7 +134,7 @@ public class FishingGame
         {
             drawStack.Shuffle();
         }
-        
+
         foreach (Player player in players)
         {
             if (player.Hand.Count == 0)
@@ -125,9 +158,10 @@ public class FishingGame
         DepositStack depositStack = new DepositStack(initialDeposite);
 
         Board = new GameBoard(players, drawStack, depositStack);
+        var awareness = new GameAwarenessTracker(players);
+        _context = new GameContext(players, awareness, this);
         _turnManager = new TurnManager();
-    
-        // Possibilité de fixer le joueur de départ pour les tests
+
         CurrentPlayer = Board.Players[0];
         IsRunning = true;
     }
@@ -140,8 +174,7 @@ public class FishingGame
     public async Task StartGameAsync()
     {
         IsRunning = true;
-        string lastMessage = "La partie commence !";
-        NotifyMessage(lastMessage);
+        NotifyMessage("La partie commence !");
 
         int currentPlayerIndex = 0;
 
@@ -149,47 +182,35 @@ public class FishingGame
         {
             CurrentPlayer = Board.Players[currentPlayerIndex];
 
+            OnCurrentPlayerChanged?.Invoke(this, CurrentPlayer);
+            OnDrawPileSizeChanged?.Invoke(this, Board.DrawStack.Count);
+
             await Task.Delay(2000);
 
-            Card? cardToPlay = null;
-            
-            bool isOpponentInDanger = Board.Players
-                .Where(p => p != CurrentPlayer)
-                .Any(p => p.Hand.Count == 1);
-
-            if (CurrentPlayer.Strategy != null)
-            {
-                cardToPlay = CurrentPlayer.Strategy.ChooseCard(
-                    CurrentPlayer.Hand,
-                    Board.DepositStack.TopCard,
-                    (card, top) => _turnManager.IsValidePlay(card, top),
-                    isOpponentInDanger
-                );
-            }
-            else
-            {
-                cardToPlay =
-                    CurrentPlayer.Hand.FirstOrDefault(c => _turnManager.IsValidePlay(c, Board.DepositStack.TopCard));
-            }
+            Card? cardToPlay = CurrentPlayer.Strategy.ChooseCard(
+                _context,
+                CurrentPlayer.Hand,
+                Board.DepositStack.TopCard,
+                (card, top) => _turnManager.IsValidePlay(card, top)
+            );
 
             if (cardToPlay.HasValue)
             {
                 CurrentPlayer.RemoveCard(cardToPlay.Value);
                 Board.DepositStack.Push(cardToPlay.Value);
-                lastMessage =
-                    $"{CurrentPlayer.FirstName} a joué {cardToPlay.Value.Value.GetName()} de {cardToPlay.Value.Color}";
-                NotifyMessage(lastMessage);
-                if (cardToPlay.Value.Value == CardValue.Jack && CurrentPlayer.Strategy != null)
+                
+                NotifyMessage($"{CurrentPlayer.FirstName} a joué {cardToPlay.Value.Value.GetName()} de {cardToPlay.Value.Color}");
+                
+                if (cardToPlay.Value.Value == CardValue.Jack)
                 {
                     CardColor color = CurrentPlayer.Strategy.ChooseColor(
+                        _context,
                         CurrentPlayer.Hand,
                         Board.DepositStack.TopCard,
-                        (card, top) => _turnManager.IsValidePlay(card, top),
-                        isOpponentInDanger
+                        (card, top) => _turnManager.IsValidePlay(card, top)
                     );
                     await Task.Delay(500);
-                    _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage,
-                        color);
+                    _turnManager.ApplyCardEffect(cardToPlay.Value, Board, ref currentPlayerIndex, NotifyMessage, color);
                 }
                 else
                 {
@@ -216,23 +237,27 @@ public class FishingGame
                 {
                     List<Card> recycledCards = Board.DepositStack.TakeAllExcepTop();
                     Board.DrawStack.Refill(recycledCards);
-                    lastMessage = "Pioche vide : recyclage de la pile de dépôt.";
+                    NotifyMessage("Pioche vide : recyclage de la pile de dépôt.");
                 }
 
                 if (Board.DrawStack.Count > 0)
                 {
                     Card drawnCard = Board.DrawStack.DrawCard();
                     CurrentPlayer.AddCard(drawnCard);
-                    lastMessage = $"{CurrentPlayer.FirstName} a pioché une carte.";
+                    
+                    OnCardDrawn?.Invoke(this, drawnCard);
+                    OnDrawPileSizeChanged?.Invoke(this, Board.DrawStack.Count);
+
+                    
+                    NotifyMessage($"{CurrentPlayer.FirstName} a pioché une carte.");
                 }
                 else
                 {
-                    lastMessage = "Match nul : plus aucune carte disponible.";
+                    NotifyMessage("Match nul : plus aucune carte disponible.");
                     IsRunning = false;
                     break;
                 }
-
-                NotifyMessage(lastMessage);
+                
                 currentPlayerIndex = Board.GetNextPlayerIndex(currentPlayerIndex);
             }
         }

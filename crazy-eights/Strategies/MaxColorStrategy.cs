@@ -12,8 +12,7 @@ public class MaxColorStrategy : IPlayerStrategy
     
 
     /// <inheritdoc/>
-    public Card? ChooseCard(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
-        bool isOpponentInDanger = false)
+    public Card? ChooseCard(GameContext context, IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
     {
         var handList = hand.ToList();
         var validCards = handList.Where(c => isValidPlay(c, topCard)).ToList();
@@ -32,10 +31,9 @@ public class MaxColorStrategy : IPlayerStrategy
     }
     
     /// <inheritdoc/>
-    public CardColor ChooseColor(IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay,
-        bool isOpponentInDanger = false)
+    public CardColor ChooseColor(GameContext context,IEnumerable<Card> hand, Card topCard, Func<Card, Card, bool> isValidPlay)
     {
-        var bestCard = this.ChooseCard(hand, topCard, isValidPlay, isOpponentInDanger);
+        var bestCard = this.ChooseCard(context, hand, topCard, isValidPlay);
         if (bestCard.HasValue)
         {
             return bestCard.Value.Color;

@@ -9,26 +9,36 @@ public struct CardColor : IEquatable<CardColor>
     /// </summary>
     public string Name { get; set; }
     
-    public CardColor(string name)
+    private CardColor(string name)
     {
         Name = name;
     }
     /// <summary>
     /// Obtient la couleur Trèfle (♣).
     /// </summary>
-    public static CardColor Clubs { get; } = new CardColor("Trèfle");
+    public static CardColor Clubs { get; } = new ("Trèfle");
     /// <summary>
     /// Obtient la couleur Carreau (♦).
     /// </summary>
-    public static CardColor Diamonds { get; } = new CardColor("Carreau");
+    public static CardColor Diamonds { get; } = new ("Carreau");
     /// <summary>
     /// Obtient la couleur Cœur (♥).
     /// </summary>
-    public static CardColor Hearts { get; } = new CardColor("Coeur");
+    public static CardColor Hearts { get; } = new ("Coeur");
     /// <summary>
     /// Obtient la couleur Pique (♠).
     /// </summary>
-    public static CardColor Spades { get; } = new CardColor("Pique");
+    public static CardColor Spades { get; } = new ("Pique");
+    /// <summary>
+    /// Obtient toutes les couleurs disponibles dans le jeu.
+    /// </summary>
+    public static IReadOnlyCollection<CardColor> All { get; } =
+    [
+        Clubs,
+        Diamonds,
+        Hearts,
+        Spades
+    ];
     /// <summary>
     /// Retourne le nom de la couleur sous forme de chaîne de caractères.
     /// </summary>
@@ -95,6 +105,6 @@ public struct CardColor : IEquatable<CardColor>
     /// <returns>Un entier 32 bits signé représentant le code de hachage du nom de la couleur.</returns>
     public override int GetHashCode()
     {
-        return Name.GetHashCode();
+        return Name?.GetHashCode() ?? 0;
     }
 }
